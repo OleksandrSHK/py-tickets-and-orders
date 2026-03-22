@@ -16,21 +16,22 @@ def create_order(
         date: datetime.datetime = None
 ) -> None:
     user = get_user_model().objects.get(username=username)
-    order = Order.objects.create(
-        user=user
-    )
+    order = Order.objects.create(user=user)
+
     if date:
         Order.objects.filter(pk=order.id).update(created_at=date)
 
+    list_id = [
+        ticket["movie_session"] for ticket in tickets
+    ]
+    movie_sessions = MovieSession.objects.in_bulk(list_id)
     for ticket in tickets:
         Ticket.objects.create(
-            movie_session=MovieSession.objects.get(
-                pk=ticket["movie_session"]
-            ),
+            movie_session=movie_sessions[ticket["movie_session"]],
             order=order,
             row=ticket["row"],
             seat=ticket["seat"]
-            )
+        )
 
 
 def get_orders(username: str = None) -> QuerySet[Order]:
